@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: flink-server
+  namespace: platform
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: flink-server
+    spec:
+      containers:
+        - name: flink-server
+          imagePullPolicy: IfNotPresent
+          image: registry.cn-hangzhou.aliyuncs.com/wuyufeng/flink-server
+          
+          command: ["/bin/sh","-itd", "usr/share/flink-1.4.0/bin/start-local.sh", "bash"]
+          ports:
+            - containerPort: 8081
+      volumes:
+        - name: code
+          persistentVolumeClaim:
+            claimName: platform-hostdisk
+            
+        - name: tz-config
+          hostPath:
+            path: /etc/localtime
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-server
+  namespace: platform
+spec:
+  type: NodePort 
+  ports:
+  - port: 8081
+    targetPort: 8081
+    protocol: TCP
+    name: "elasticsearch"
+    nodePort: 30060
+  selector:
+    app: flink-server
